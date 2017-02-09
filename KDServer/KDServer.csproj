@@ -41,6 +41,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="CServer.cs" />
     <Compile Include="CUser.cs" />
     <Compile Include="EVENTID_Client.cs" />
     <Compile Include="Net\BufferManager.cs" />
@@ -57,7 +58,7 @@
     <Compile Include="Net\SocketAsyncEventArgsPool.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="UserManager.cs" />
+    <Compile Include="CUserManager.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

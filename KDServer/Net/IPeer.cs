@@ -10,11 +10,11 @@ namespace KDServer.Net
     /// 서버와 클라이언트에서 공통으로 사용하는 세션 객체.
     public interface IPeer
     {
-        void SendPacket(CPacket _packet);
+        void SendPacket(CPacket packet_);
         
         void OnPacket(Const<byte[]> buffer);
         
-        void ProcessPacket(CPacket _packet);
+        void ProcessPacket(CPacket packet_);
 
         /// 원격 연결이 끊겼을 때 호출 된다.
         void OnRemoved();

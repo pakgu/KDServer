@@ -3,17 +3,18 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Collections.Concurrent;
 using System.Net.Sockets;
 
 namespace KDServer.Net
 {
     class SocketAsyncEventArgsPool
     {
-        Stack<SocketAsyncEventArgs> m_pool;
+        ConcurrentStack<SocketAsyncEventArgs> pool;
 
-        public SocketAsyncEventArgsPool(int capacity)
+        public SocketAsyncEventArgsPool()
         {
-            m_pool = new Stack<SocketAsyncEventArgs>(capacity);
+            pool = new ConcurrentStack<SocketAsyncEventArgs>();
         }
 
 
@@ -21,26 +22,22 @@ namespace KDServer.Net
         {
             if (args == null) 
             {
-                throw new ArgumentNullException("Push SocketAsyncEventArgsPool Fail. SocketAsyncEventArgs is Null"); 
+                throw new ArgumentNullException("Fail SocketAsyncEventArgsPool:Push"); 
             }
 
-            lock (m_pool)
-            {
-                m_pool.Push(args);
-            }
+            pool.Push(args);
         }
 
         public SocketAsyncEventArgs Pop()
         {
-            lock (m_pool)
-            {
-                return m_pool.Pop();
-            }
+            SocketAsyncEventArgs args;
+            pool.TryPop(out args);
+            return args;
         }
 
         public int Count
         {
-            get { return m_pool.Count; }
+            get { return pool.Count; }
         }
     }
 }

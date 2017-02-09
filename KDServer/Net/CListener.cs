@@ -47,7 +47,7 @@ namespace KDServer.Net
                 this.acceptArgs = new SocketAsyncEventArgs();
                 this.acceptArgs.Completed += new EventHandler<SocketAsyncEventArgs>(On_CompletedAccept);
 
-                Thread listen_thread = new Thread(_Listen);
+                Thread listen_thread = new Thread(Listen);
                 listen_thread.Start();
             }
             catch (Exception e)
@@ -56,7 +56,7 @@ namespace KDServer.Net
             }
         }
 
-        void _Listen()
+        void Listen()
         {
             this.evFlag = new AutoResetEvent(false);
 
@@ -84,24 +84,24 @@ namespace KDServer.Net
             }
         }
 
-        void On_CompletedAccept(object sender, SocketAsyncEventArgs args)
+        void On_CompletedAccept(object sender_, SocketAsyncEventArgs args_)
         {
-            if (args.SocketError == SocketError.Success)
+            if (args_.SocketError == SocketError.Success)
             {
-                Socket socket = args.AcceptSocket;
+                Socket socket = args_.AcceptSocket;
 
                 this.evFlag.Set();
 
                 if (this.callback_OnNewclient != null)
                 {
-                    this.callback_OnNewclient(socket, args.UserToken);
+                    this.callback_OnNewclient(socket, args_.UserToken);
                 }
 
                 return;
             }
             else
             {
-                Console.WriteLine("Accept Failed.");
+                Console.WriteLine("Fail CListener:On_CompletedAccept. {0}", args_.SocketError);
             }
 
             this.evFlag.Set();

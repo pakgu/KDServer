@@ -19,38 +19,16 @@ namespace KDServer
 
         void IPeer.OnPacket(Const<byte[]> buffer)
         {
-            // ex)
-            CPacket packet = new CPacket(buffer.Value, this);
-            EVENTID protocol = (EVENTID)packet.PopEventID();
+            byte[] clone = new byte[Define.BUFFER_SIZE];
+            Array.Copy(buffer.Value, clone, buffer.Value.Length);
+            CPacket packet = new CPacket(clone, this);
 
-            Console.WriteLine("------------------------------------------------------");
-            Console.WriteLine("protocol id " + protocol);
-
-            switch (protocol)
-            {
-                case EVENTID.E_REQ:
-                    {
-                        string text = packet.Get_string();
-                        Console.WriteLine(string.Format("text {0}", text));
-
-                        CPacket response = CPacket.Create((short)EVENTID.E_ACK);
-                        response.Put(text);
-                        SendPacket(response);
-                    }
-                    break;
-            }
-        }
-
-        public void SendPacket(CPacket _packet)
-        {
-            this.token.SendPacket(_packet);
+            CServer.GetInstance().EnqueuePacket(packet, this);
         }
 
         void IPeer.OnRemoved()
         {
-            Console.WriteLine("The client disconnected.");
-
-//            Program.remove_user(this);
+            CServer.GetInstance().RemoveUser(this);
         }
 
         void IPeer.Disconnect()
@@ -58,8 +36,34 @@ namespace KDServer
             this.token.socket.Disconnect(false);
         }
 
-        void IPeer.ProcessPacket(CPacket _packet)
+        void IPeer.ProcessPacket(CPacket packet_)
         {
+            EVENTID protocol = (EVENTID)packet_.PopEventID();
+
+            switch (protocol)
+            {
+                case EVENTID.E_REQ:
+                    {
+                        string text = packet_.Get_string();
+                        Console.WriteLine(string.Format("text {0}", text));
+
+                        CPacket packet = CPacket.Create((short)EVENTID.E_ACK);
+                        packet.Put(text);
+                        CServer.GetInstance().BroadCast(packet);
+                    }
+                    break;
+            }
+
+        }
+
+        public void SendPacket(CPacket packet_)
+        {
+            this.token.SendPacket(packet_);
+        }
+
+        public CUserToken GetToken()
+        {
+            return token;
         }
     }
 }

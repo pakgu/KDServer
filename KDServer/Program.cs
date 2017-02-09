@@ -9,20 +9,9 @@ namespace KDServer
 {
     class Program
     {
-        UserManager userManager;
-
         static void Main(string[] args)
         {
-            CPacketBufferManager.Init(2000);
-
-            CNetworkService service = new CNetworkService();            
-
-            service.callback_CreatedSession += On_CreatedSession;
-
-            service.Init();
-            service.Listen("0.0.0.0", 7979, 100);
-
-            this.userManager.Init();
+            CServer.GetInstance().Init();
 
             Console.WriteLine("Server On");
 
@@ -33,13 +22,5 @@ namespace KDServer
 
             Console.ReadKey();
         }
-
-        static void On_CreatedSession(CUserToken token)
-        {
-            CUser user = new CUser(token);
-            this.userManager.AddUser(user);
-        }
-
-
     }
 }

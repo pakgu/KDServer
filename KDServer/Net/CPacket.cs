@@ -57,10 +57,10 @@ namespace KDServer.Net
             return Get_int16();
         }
 
-        public void Copy_to(CPacket _packet)
+        public void Copy_to(CPacket packet_)
         {
-            _packet.SetEvnetID(this.eventID);
-            _packet.Write(this.buffer, this.position);
+            packet_.SetEvnetID(this.eventID);
+            packet_.Write(this.buffer, this.position);
         }
 
         public void Write(byte[] source, int position)
@@ -69,7 +69,7 @@ namespace KDServer.Net
             this.position = position;
         }
 
-        public void RecordSize()
+        public void RecordDataSize()
         {
             Int16 dataSize = (Int16)(this.position - Define.HEADER_SIZE);
             byte[] header = BitConverter.GetBytes(dataSize);

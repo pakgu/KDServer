@@ -12,7 +12,7 @@ namespace KDServer.Net
 {
     class CNetworkService
     {
-        int connectedCount;
+        int totalConnectedCount;
         CListener listener;
         SocketAsyncEventArgsPool recvEventArgsPool;
         SocketAsyncEventArgsPool sendEventArgsPool;
@@ -24,15 +24,15 @@ namespace KDServer.Net
 
         public CNetworkService()
         {
-            this.connectedCount = 0;
+            this.totalConnectedCount = 0;
             this.callback_CreatedSession = null;
         }
 
         public void Init()
         {
             this.bufferManager = new BufferManager(Define.MAX_CONNECT * Define.BUFFER_SIZE * 2, Define.BUFFER_SIZE);
-            this.recvEventArgsPool = new SocketAsyncEventArgsPool(Define.MAX_CONNECT);
-            this.sendEventArgsPool = new SocketAsyncEventArgsPool(Define.MAX_CONNECT);
+            this.recvEventArgsPool = new SocketAsyncEventArgsPool();
+            this.sendEventArgsPool = new SocketAsyncEventArgsPool();
 
             this.bufferManager.InitBuffer();
 
@@ -72,11 +72,7 @@ namespace KDServer.Net
 
         public void On_CompletedConnect(Socket socket, CUserToken token)
         {
-            // SocketAsyncEventArgsPool에서 빼오지 않고 그때 그때 할당해서 사용한다.
-            // 풀은 서버에서 클라이언트와의 통신용으로만 쓰려고 만든것이기 때문이다.
             // 클라이언트 입장에서 서버와 통신을 할 때는 접속한 서버당 두개의 EventArgs만 있으면 되기 때문에 그냥 new해서 쓴다.
-            // 서버간 연결에서도 마찬가지이다.
-            // 풀링처리를 하려면 c->s로 가는 별도의 풀을 만들어서 써야 한다.
             SocketAsyncEventArgs recvArgs = new SocketAsyncEventArgs();
             recvArgs.Completed += new EventHandler<SocketAsyncEventArgs>(CompletedRecv);
             recvArgs.UserToken = token;
@@ -92,11 +88,7 @@ namespace KDServer.Net
 
         void On_NewClient(Socket client_socket, object token)
         {
-            Interlocked.Increment(ref this.connectedCount);
-
-            Console.WriteLine(string.Format("[{0}] A client connected. handle {1},  count {2}",
-                Thread.CurrentThread.ManagedThreadId, client_socket.Handle,
-                this.connectedCount));
+            Interlocked.Increment(ref this.totalConnectedCount);
 
             // 플에서 하나 꺼내와 사용한다.
             SocketAsyncEventArgs recvArgs = this.recvEventArgsPool.Pop();
@@ -106,6 +98,7 @@ namespace KDServer.Net
             if (this.callback_CreatedSession != null)
             {
                 user_token = recvArgs.UserToken as CUserToken;
+                user_token.socket = client_socket;
                 this.callback_CreatedSession(user_token);
             }
 
@@ -151,7 +144,7 @@ namespace KDServer.Net
             }
             else
             {
-                Console.WriteLine(string.Format("error {0},  transferred {1}", args.SocketError, args.BytesTransferred));
+                Console.WriteLine(string.Format("ProcessRecv error {0},  transferred {1}", args.SocketError, args.BytesTransferred));
                 CloseSocket(token);
             }
         }
@@ -167,8 +160,6 @@ namespace KDServer.Net
             token.on_Removed();
 
             // Free the SocketAsyncEventArg so they can be reused by another client
-            // 버퍼는 반환할 필요가 없다. SocketAsyncEventArg가 버퍼를 물고 있기 때문에
-            // 이것을 재사용 할 때 물고 있는 버퍼를 그대로 사용하면 되기 때문이다.
             if (this.recvEventArgsPool != null)
             {
                 this.recvEventArgsPool.Push(token.recvArgs);

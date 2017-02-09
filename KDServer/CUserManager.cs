@@ -2,37 +2,33 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Collections.Concurrent;
 using System.Threading.Tasks;
 
 namespace KDServer
 {
-    public class UserManager
+    class CUserManager
     {
-        static List<CUser> userlist;
+        public ConcurrentBag<CUser> userlist { get; private set; }
 
-        public UserManager()
+        public CUserManager()
         {
+            Init();
         }
 
         public void Init()
         {
-            userlist = new List<CUser>();
+            userlist = new ConcurrentBag<CUser>();
         }
 
         public void AddUser(CUser user)
         {
-            lock (userlist)
-            {
-                userlist.Add(user);
-            }
+            userlist.Add(user);
         }
 
         public void RemoveUser(CUser user)
         {
-            lock (userlist)
-            {
-                userlist.Remove(user);
-            }
+            userlist.TryTake(out user);
         }
     }
 }
